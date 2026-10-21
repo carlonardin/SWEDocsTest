@@ -19,7 +19,7 @@ jobs:
       - name: Setup Typst
         uses: typst-community/setup-typst@v3
 
-- name: Compila e prepara la cartella pubblica
+      - name: Compila e prepara la cartella pubblica
         run: |
           # 1. Copiamo la vetrina web e gli asset (ignorando gli errori se assets non esiste ancora)
           mkdir -p public
