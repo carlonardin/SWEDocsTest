@@ -1,3 +1,24 @@
+name: Build Typst & Deploy
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Typst
+        uses: typst-community/setup-typst@v3
+
 - name: Compila e prepara la cartella pubblica
         run: |
           # 1. Copiamo la vetrina web e gli asset (ignorando gli errori se assets non esiste ancora)
@@ -19,3 +40,14 @@
             echo "Compilazione di $clean_file..."
             typst compile "$clean_file" "public/pdf/${clean_file%.typ}.pdf"
           done
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'public'
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
