@@ -1,34 +1,21 @@
-name: Build Typst & Deploy
-
-on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"] # Si attiva anche quando qualcuno apre una PR per richiedere verifica
-
-jobs:
-  build-and-preview:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Typst
-        uses: typst-community/setup-typst@v3
-
-      - name: Compila i documenti
+- name: Compila e prepara la cartella pubblica
         run: |
-          mkdir -p output_pdf/archivio
-          # (Qui va il ciclo for che abbiamo visto prima per compilare i .typ)
+          # 1. Copiamo la vetrina web e gli asset (ignorando gli errori se assets non esiste ancora)
+          mkdir -p public
+          cp index.html public/
+          cp -r assets public/ || true
 
-      # Questo step carica i PDF generati nella PR come file scaricabili
-      - name: Upload PDF Preview (solo per le Pull Request)
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: Anteprima-PDF-Verificatore
-          path: output_pdf/
-          retention-days: 5 # I file temporanei si cancellano da soli dopo 5 giorni
-          
-      # Gli step di deploy su GitHub Pages vanno eseguiti SOLO sul main
-      # (Si aggiunge "if: github.ref == 'refs/heads/main'")
+          # 2. Compiliamo tutti i file Typst mantenendo la struttura originale delle cartelle
+          # Questo script trova tutti i file .typ e crea le cartelle corrispondenti in public/pdf/
+          find . -name "*.typ" -type f | while read -r file; do
+            # Pulisce il percorso rimuovendo il './' iniziale
+            clean_file=$(echo "$file" | sed 's|^\./||')
+            dir_path=$(dirname "$clean_file")
+            
+            # Crea la cartella di destinazione speculare
+            mkdir -p "public/pdf/$dir_path"
+            
+            # Compila il file
+            echo "Compilazione di $clean_file..."
+            typst compile "$clean_file" "public/pdf/${clean_file%.typ}.pdf"
+          done
